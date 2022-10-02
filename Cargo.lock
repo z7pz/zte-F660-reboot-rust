@@ -1166,6 +1166,7 @@ name = "rust-reboot-zte"
 version = "0.1.0"
 dependencies = [
  "headless_chrome",
+ "serde_json",
 ]
 
 [[package]]

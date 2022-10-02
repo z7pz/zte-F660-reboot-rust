@@ -8,6 +8,7 @@ edition = "2021"
 
 
 [dependencies]
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
 [dependencies.headless_chrome]
 git = "https://github.com/atroche/rust-headless-chrome"

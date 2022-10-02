@@ -1,49 +1,37 @@
 use headless_chrome::protocol::cdp::Page::CaptureScreenshotFormatOption;
 use headless_chrome::{Browser, Tab};
+use serde_json::value::Value;
 use std::error::Error;
 use std::fs;
 use std::sync::Arc;
-
 fn main() -> Result<(), Box<dyn Error>> {
     let mut url = String::from("http://10.25.168.50");
-    let browser = Browser::default()?;
+    let username = String::from("admin");
+    let password = String::from("admin");
 
+    let browser = Browser::default()?;
     let tab = browser.wait_for_initial_tab()?;
     tab.navigate_to(&url)?;
     tab.wait_until_navigated().unwrap();
     let username_input = tab.wait_for_element("#Frm_Username")?;
     let password_input = tab.wait_for_element("#Frm_Password")?;
     let username_remote = username_input.call_js_fn(
-        r#"
-    function set_username () {
-        this.value = "admin"
-        return this.value;
-    }
-"#,
-        vec![],
+        r#"function set_username (username) {this.value = username;return this.value;}"#,
+        vec![Value::String(username)],
         false,
     )?;
     match username_remote.value {
-        Some(returned_string) => {
-            println!("{}", &returned_string);
-        }
+        Some(_returned_string) => println!("✔ username"),
         _ => unreachable!(),
     };
 
     let password_remote = password_input.call_js_fn(
-        r#"
-    function set_password () {
-        this.value = "admin"
-        return this.value;
-    }
-"#,
-        vec![],
+        r#"function set_password (password) {this.value = password;return this.value;}"#,
+        vec![Value::String(password)],
         false,
     )?;
     match password_remote.value {
-        Some(returned_string) => {
-            println!("{}", &returned_string);
-        }
+        Some(_returned_string) => println!("✔ password"),
         _ => unreachable!(),
     };
 
@@ -54,23 +42,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     match tab
         .wait_for_element("body")?
         .call_js_fn(
-            r#"
-    function reboot () {
-        remove_msgbox();msgCallback();
-        return true;
-    }
-"#,
+            r#"function reboot () {remove_msgbox();msgCallback();return true;}"#,
             vec![],
             false,
         )?
         .value
     {
-        Some(_retured_value) => {
-            println!("Router is rebooting.")
-        }
-        _ => {
-            println!("Failed to reboot.")
-        }
+        Some(_retured_value) => println!("🐱‍🏍 Router is rebooting."),
+        _ => panic!("Failed to reboot."),
     }
     screenshot(&tab)?;
 
