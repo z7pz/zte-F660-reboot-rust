@@ -12,22 +12,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     let browser = Browser::default().unwrap();
     let tab = browser.wait_for_initial_tab().unwrap();
     tab.navigate_to(&url)
-        .expect(&format!("couldn't navigate to \"{}\"!", &url));
+        .unwrap_or_else(|_| panic!("couldn't navigate to \"{}\"!", &url));
     tab.wait_until_navigated()
-        .expect(&format!("couldn't navigate to \"{}\"!", &url));
-    let username_input = tab
-        .wait_for_element("#Frm_Username")
-        .expect("#Frm_Username not found");
-    let password_input = tab
-        .wait_for_element("#Frm_Password")
-        .expect("Frm_Password not found");
+        .unwrap_or_else(|_| panic!("couldn't navigate to \"{}\"!", &url));
+    let username_input = tab.wait_for_element("#Frm_Username").unwrap();
+    let password_input = tab.wait_for_element("#Frm_Password").unwrap();
     let username_remote = username_input
         .call_js_fn(
             r#"function set_username (username) {this.value = username;return this.value;}"#,
             vec![Value::String(username)],
             false,
         )
-        .expect("error while insert set_username script in the website");
+        .unwrap();
     match username_remote.value {
         Some(_returned_string) => println!("✔ username"),
         _ => unreachable!(),
@@ -39,21 +35,20 @@ fn main() -> Result<(), Box<dyn Error>> {
             vec![Value::String(password)],
             false,
         )
-        .expect("error while insert set_password script in the website");
+        .unwrap();
     match password_remote.value {
         Some(_returned_string) => println!("✔ password"),
         _ => unreachable!(),
     };
 
-    tab.press_key("Enter").expect("can't press Enter");
-    tab.wait_for_element("body")
-        .expect("Body element not found");
+    tab.press_key("Enter").unwrap();
+    tab.wait_for_element("body").unwrap();
     url.push_str("/template.gch?pid=1002&nextpage=manager_dev_conf_t.gch");
     tab.navigate_to(&url)
-        .expect(&format!("couldn't navigate to \"{}\"!", &url));
+        .unwrap_or_else(|_| panic!("couldn't navigate to \"{}\"!", &url));
     match tab
         .wait_for_element("body")
-        .expect("couldn't find body element")
+        .unwrap()
         .call_js_fn(
             r#"function reboot () {remove_msgbox();msgCallback();return true;}"#,
             vec![],
@@ -65,7 +60,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some(_retured_value) => println!("🐱‍🏍 Router is rebooting."),
         _ => panic!("Failed to reboot."),
     }
-    screenshot(&tab).expect("couldn't take a screenshot");
+    screenshot(&tab).unwrap_or_else(|_| panic!("couldn't take a screenshot!"));
 
     Ok(())
 }
@@ -76,6 +71,7 @@ fn screenshot(tab: &Arc<Tab>) -> Result<(), Box<dyn Error>> {
         .expect("couldn't find body element")
         .capture_screenshot(CaptureScreenshotFormatOption::Png)
         .expect("couldn't take a screenshot");
-    fs::write("screenshot.png", &png_data).expect("couldn't save screenshot.png");
+    fs::write("screenshot.png", &png_data)
+        .unwrap_or_else(|_| panic!("couldn't take a screenshot!"));
     Ok(())
 }
